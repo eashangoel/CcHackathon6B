@@ -1,0 +1,59 @@
+version: "3.2"
+
+services:
+  rabbit_mq:
+    image: rabbitmq:3.8-rc-management
+    container_name: rabbit_mq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - rabbit_mqdata:/usr/share/rabbitmq/data
+
+  producer:
+    build: producer
+    depends_on:
+      - rabbit_mq
+    ports:
+      - 5005:5005
+    environment:
+      AMQP_URL: "amqp://rabbit_mq?connection_attempts=10&retry_delay=10"
+    volumes:
+      - ./producer:/C:\Users\Vasavi\Desktop\cc_hackathon\cc_hackathon\src\producer
+
+  consumer1:
+    build: consumer
+    depends_on:
+      - rabbit_mq
+      - producer
+    environment:
+      AMQP_URL: "amqp://rabbit_mq?connection_attempts=10&retry_delay=10"
+      CONSUMER_ID: "c1"
+      SERVER_URL: "http://producer:5005/new_ride_matching_consumer"
+    volumes:
+      - ./consumer:/C:\Users\Vasavi\Desktop\cc_hackathon\cc_hackathon\src\consumer
+
+  consumer2:
+    build: consumer
+    depends_on:
+      - rabbit_mq
+      - producer
+    environment:
+      AMQP_URL: "amqp://rabbit_mq?connection_attempts=10&retry_delay=10"
+      CONSUMER_ID: "c2"
+      SERVER_URL: "http://producer:5005/new_ride_matching_consumer"
+    volumes:
+      - ./consumer:C:\Users\Vasavi\Desktop\cc_hackathon\cc_hackathon\src\consumer
+  database:
+    build: database
+    depends_on:
+      - rabbit_mq
+      - producer
+    environment:
+      AMQP_URL: "amqp://rabbit_mq?connection_attempts=10&retry_delay=10"
+    volumes:
+      - ./database:C:\Users\Vasavi\Desktop\cc_hackathon\cc_hackathon\src\database
+
+volumes:
+  rabbit_mqdata:
+    driver: local
